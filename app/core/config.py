@@ -2,6 +2,7 @@ from pydantic_settings import BaseSettings
 from functools import lru_cache
 import os
 from dotenv import load_dotenv
+from typing import Optional
 
 load_dotenv()
 
@@ -23,25 +24,22 @@ class Settings(BaseSettings):
     SMTP_PORT: int = int(os.getenv("SMTP_PORT", 587))
     
     # Firebase settings
-    FIREBASE_TYPE: str = os.getenv("FIREBASE_TYPE")
-    FIREBASE_PROJECT_ID: str = os.getenv("FIREBASE_PROJECT_ID")
-    FIREBASE_PRIVATE_KEY_ID: str = os.getenv("FIREBASE_PRIVATE_KEY_ID")
-    FIREBASE_PRIVATE_KEY: str = os.getenv("FIREBASE_PRIVATE_KEY", "").replace('\\n', '\n')
-    FIREBASE_CLIENT_EMAIL: str = os.getenv("FIREBASE_CLIENT_EMAIL")
-    FIREBASE_CLIENT_ID: str = os.getenv("FIREBASE_CLIENT_ID")
+    FIREBASE_TYPE: Optional[str] = os.getenv("FIREBASE_TYPE")
+    FIREBASE_PROJECT_ID: Optional[str] = os.getenv("FIREBASE_PROJECT_ID")
+    FIREBASE_PRIVATE_KEY_ID: Optional[str] = os.getenv("FIREBASE_PRIVATE_KEY_ID")
+    FIREBASE_PRIVATE_KEY: Optional[str] = os.getenv("FIREBASE_PRIVATE_KEY", "").replace('\\n', '\n')
+    FIREBASE_CLIENT_EMAIL: Optional[str] = os.getenv("FIREBASE_CLIENT_EMAIL")
+    FIREBASE_CLIENT_ID: Optional[str] = os.getenv("FIREBASE_CLIENT_ID")
     FIREBASE_AUTH_URI: str = os.getenv("FIREBASE_AUTH_URI", "https://accounts.google.com/o/oauth2/auth")
     FIREBASE_TOKEN_URI: str = os.getenv("FIREBASE_TOKEN_URI", "https://oauth2.googleapis.com/token")
     FIREBASE_AUTH_PROVIDER_X509_CERT_URL: str = os.getenv(
         "FIREBASE_AUTH_PROVIDER_X509_CERT_URL",
         "https://www.googleapis.com/oauth2/v1/certs"
     )
-    FIREBASE_CLIENT_CERT_URL: str = os.getenv(
-        "FIREBASE_CLIENT_CERT_URL",
-        f"https://www.googleapis.com/robot/v1/metadata/x509/{os.getenv('FIREBASE_CLIENT_EMAIL', '').replace('@', '%40')}"
-    )
+    FIREBASE_CLIENT_CERT_URL: Optional[str] = os.getenv("FIREBASE_CLIENT_CERT_URL")
+
     SMTP_USER: str = os.getenv("SMTP_USER", "")
     SMTP_PASSWORD: str = os.getenv("SMTP_PASSWORD", "")
-    
     # AWS S3 Settings
     AWS_ACCESS_KEY_ID: str = os.getenv("AWS_ACCESS_KEY_ID", "")
     AWS_SECRET_ACCESS_KEY: str = os.getenv("AWS_SECRET_ACCESS_KEY", "")

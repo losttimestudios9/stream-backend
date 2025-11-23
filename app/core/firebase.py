@@ -1,18 +1,30 @@
-"""
-Firebase configuration and utilities.
-"""
-from typing import Optional, Dict, Any
+# app/core/firebase.py
+from typing import Optional, Tuple, Any
 import firebase_admin
 from firebase_admin import credentials, auth, firestore, storage
 from firebase_admin.auth import UserRecord, UserNotFoundError
 from fastapi import HTTPException, status
 from .config import settings
 
-# Initialize Firebase Admin SDK
-def initialize_firebase():
+# Initialize variables
+db = None
+bucket = None
+
+def initialize_firebase() -> Tuple[Any, Any]:
     """Initialize Firebase Admin SDK with service account credentials."""
+    global db, bucket
+    
     try:
-        # Get the service account key from settings
+        # Check if required Firebase settings are present
+        if not all([
+            settings.FIREBASE_TYPE,
+            settings.FIREBASE_PROJECT_ID,
+            settings.FIREBASE_PRIVATE_KEY,
+            settings.FIREBASE_CLIENT_EMAIL
+        ]):
+            print("Warning: Firebase configuration is incomplete. Firebase features will be disabled.")
+            return None, None
+
         firebase_credentials = {
             "type": settings.FIREBASE_TYPE,
             "project_id": settings.FIREBASE_PROJECT_ID,
@@ -37,15 +49,19 @@ def initialize_firebase():
         bucket = storage.bucket()
         
         return db, bucket
+        
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to initialize Firebase: {str(e)}"
-        )
+        print(f"Warning: Failed to initialize Firebase: {str(e)}")
+        return None, None
 
-# Firebase Auth functions
+# Initialize Firebase on import
+db, bucket = initialize_firebase()
+
+# Update other functions to check if Firebase is initialized
 async def get_user(uid: str) -> Optional[UserRecord]:
     """Get a user by their Firebase UID."""
+    if not firebase_admin._apps:
+        return None
     try:
         return auth.get_user(uid)
     except UserNotFoundError:
@@ -55,63 +71,3 @@ async def get_user(uid: str) -> Optional[UserRecord]:
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Error getting user: {str(e)}"
         )
-
-async def create_user(email: str, password: str, display_name: str = None) -> UserRecord:
-    """Create a new Firebase user."""
-    try:
-        user = auth.create_user(
-            email=email,
-            password=password,
-            display_name=display_name,
-            email_verified=False
-        )
-        return user
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Error creating user: {str(e)}"
-        )
-
-async def verify_id_token(token: str) -> Dict[str, Any]:
-    """Verify a Firebase ID token."""
-    try:
-        return auth.verify_id_token(token)
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-# Firestore functions
-async def get_document(collection: str, doc_id: str) -> Dict[str, Any]:
-    """Get a document from Firestore."""
-    try:
-        db = firestore.client()
-        doc_ref = db.collection(collection).document(doc_id)
-        doc = doc_ref.get()
-        if doc.exists:
-            return doc.to_dict()
-        return None
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error getting document: {str(e)}"
-        )
-
-# Storage functions
-async def upload_file(file_path: str, destination_path: str) -> str:
-    """Upload a file to Firebase Storage."""
-    try:
-        bucket = storage.bucket()
-        blob = bucket.blob(destination_path)
-        blob.upload_from_filename(file_path)
-        return blob.public_url
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error uploading file: {str(e)}"
-        )
-
-# Initialize Firebase when this module is imported
-db, bucket = initialize_firebase()
