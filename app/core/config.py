@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Lost Time Studios API"
     VERSION: str = "1.0.0"
     API_V1_STR: str = "/api/v1"
-    SECRET_KEY: str = os.getenv("SECRET_KEY", "your-secret-key-here")
+    SECRET_KEY: str = os.getenv("SECRET_KEY")
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./losttime.db")
@@ -21,6 +21,24 @@ class Settings(BaseSettings):
     # Email settings
     SMTP_SERVER: str = os.getenv("SMTP_SERVER", "smtp.gmail.com")
     SMTP_PORT: int = int(os.getenv("SMTP_PORT", 587))
+    
+    # Firebase settings
+    FIREBASE_TYPE: str = os.getenv("FIREBASE_TYPE")
+    FIREBASE_PROJECT_ID: str = os.getenv("FIREBASE_PROJECT_ID")
+    FIREBASE_PRIVATE_KEY_ID: str = os.getenv("FIREBASE_PRIVATE_KEY_ID")
+    FIREBASE_PRIVATE_KEY: str = os.getenv("FIREBASE_PRIVATE_KEY", "").replace('\\n', '\n')
+    FIREBASE_CLIENT_EMAIL: str = os.getenv("FIREBASE_CLIENT_EMAIL")
+    FIREBASE_CLIENT_ID: str = os.getenv("FIREBASE_CLIENT_ID")
+    FIREBASE_AUTH_URI: str = os.getenv("FIREBASE_AUTH_URI", "https://accounts.google.com/o/oauth2/auth")
+    FIREBASE_TOKEN_URI: str = os.getenv("FIREBASE_TOKEN_URI", "https://oauth2.googleapis.com/token")
+    FIREBASE_AUTH_PROVIDER_X509_CERT_URL: str = os.getenv(
+        "FIREBASE_AUTH_PROVIDER_X509_CERT_URL",
+        "https://www.googleapis.com/oauth2/v1/certs"
+    )
+    FIREBASE_CLIENT_CERT_URL: str = os.getenv(
+        "FIREBASE_CLIENT_CERT_URL",
+        f"https://www.googleapis.com/robot/v1/metadata/x509/{os.getenv('FIREBASE_CLIENT_EMAIL', '').replace('@', '%40')}"
+    )
     SMTP_USER: str = os.getenv("SMTP_USER", "")
     SMTP_PASSWORD: str = os.getenv("SMTP_PASSWORD", "")
     
@@ -29,12 +47,6 @@ class Settings(BaseSettings):
     AWS_SECRET_ACCESS_KEY: str = os.getenv("AWS_SECRET_ACCESS_KEY", "")
     AWS_S3_BUCKET: str = os.getenv("AWS_S3_BUCKET", "losttime-media")
 
-    # Supabase Settings
-    SUPABASE_URL: str = os.getenv("SUPABASE_URL", "")
-    SUPABASE_KEY: str = os.getenv("SUPABASE_KEY", "")
-    SUPABASE_SERVICE_KEY: str = os.getenv("SUPABASE_SERVICE_KEY", "")
-
-    
     class Config:
         case_sensitive = True
 

@@ -2,18 +2,10 @@
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
+from passlib.context import CryptContext
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 from app.core.config import settings
-from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
-from jose import JWTError, jwt
-from passlib.context import CryptContext
-from datetime import datetime, timedelta
-from typing import Optional
-from app.core.config import settings
-from supabase import Client
-from app.core.supabase import get_supabase
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -50,12 +42,10 @@ def create_refresh_token(data: dict) -> str:
     return jwt.encode(to_encode, settings.JWT_REFRESH_SECRET_KEY, algorithm=settings.ALGORITHM)
 
 async def get_current_user(
-    token: str = Depends(oauth2_scheme),
-    supabase: Client = Depends(get_supabase)
+    token: str = Depends(oauth2_scheme)
 ) -> Dict[str, Any]:
     """
     Get the current user from the JWT token.
-    This is a simplified version that works with Supabase Auth.
     """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -67,17 +57,24 @@ async def get_current_user(
         raise credentials_exception
     
     try:
-        # Supabase JWT verification
-        user = supabase.auth.get_user(token)
-        if not user or not user.user:
+        # Verify JWT token
+        payload = jwt.decode(
+            token,
+            settings.JWT_SECRET_KEY,
+            algorithms=[settings.ALGORITHM],
+            options={"verify_aud": False}
+        )
+        
+        if not payload.get("sub"):
             raise credentials_exception
+            
         return {
-            "id": user.user.id,
-            "email": user.user.email,
-            "role": user.user.user_metadata.get("role", "user"),
-            "is_verified": user.user.email_confirmed_at is not None
+            "id": payload.get("sub"),
+            "email": payload.get("email"),
+            "role": payload.get("role", "user"),
+            "is_verified": payload.get("is_verified", False)
         }
-    except Exception as e:
+    except JWTError:
         raise credentials_exception
 
 async def get_current_active_user(
